@@ -80,6 +80,8 @@ typedef enum {
     STAT_RMC = 4,                  /*!< GPRMC statement */
     STAT_UBX = 5,                  /*!< UBX statement (uBlox specific) */
     STAT_UBX_TIME = 6,             /*!< UBX TIME statement (uBlox specific) */
+    STAT_PQTM_PVT = 7,             /*!< PQTMPVT statement (Quectel specific) */
+    STAT_PQTM_EPE = 8,             /*!< PQTMEPE statement (Quectel specific) */
     STAT_CHECKSUM_FAIL = UINT8_MAX /*!< Special case, used when checksum fails */
 } lwgps_statement_t;
 
@@ -152,6 +154,40 @@ typedef struct {
     lwgps_float_t clk_drift; /*!< Receiver clock drift, eg -2660.664 */
     uint32_t tp_gran;        /*!< Time pulse granularity, eg 43 */
 #endif                       /* LWGPS_CFG_STATEMENT_PUBX_TIME || __DOXYGEN__ */
+
+#if LWGPS_CFG_STATEMENT_PQTMPVT || __DOXYGEN__
+    /* Information related to PQTMPVT statement (Quectel proprietary) */
+    lwgps_float_t pqtm_lat;       /*!< Latitude in decimal degrees (negative = South) */
+    lwgps_float_t pqtm_lon;       /*!< Longitude in decimal degrees (negative = West) */
+    lwgps_float_t pqtm_alt;       /*!< Altitude above MSL in meters */
+    lwgps_float_t pqtm_sep;       /*!< Geoid separation in meters */
+    lwgps_float_t pqtm_dop_h;     /*!< Horizontal dilution of precision */
+    lwgps_float_t pqtm_dop_p;     /*!< Position dilution of precision */
+    lwgps_float_t pqtm_vel_n;     /*!< North velocity in m/s */
+    lwgps_float_t pqtm_vel_e;     /*!< East velocity in m/s */
+    lwgps_float_t pqtm_vel_d;     /*!< Down velocity in m/s */
+    lwgps_float_t pqtm_speed;     /*!< Ground speed in m/s */
+    lwgps_float_t pqtm_heading;   /*!< Heading in degrees (0-360) */
+    uint32_t pqtm_tow;            /*!< GPS time of week in milliseconds */
+    uint32_t pqtm_date;           /*!< UTC date in YYYYMMDD format */
+    uint8_t pqtm_hours;           /*!< Hours in UTC */
+    uint8_t pqtm_minutes;         /*!< Minutes in UTC */
+    uint8_t pqtm_seconds;         /*!< Seconds in UTC */
+    uint16_t pqtm_milliseconds;   /*!< Milliseconds part of UTC time (0-999) */
+    uint8_t pqtm_sats_in_use;     /*!< Number of satellites in use */
+    uint8_t pqtm_fix_mode;        /*!< Fix mode (0=none, 2=2D, 3=3D) */
+    uint8_t pqtm_quality;         /*!< GPS quality (0=invalid, 1=GPS, 2=DGPS, 6=estimated) */
+    int8_t pqtm_leap_sec;         /*!< Leap seconds, or -1 if invalid */
+#endif                            /* LWGPS_CFG_STATEMENT_PQTMPVT || __DOXYGEN__ */
+
+#if LWGPS_CFG_STATEMENT_PQTMEPE || __DOXYGEN__
+    /* Information related to PQTMEPE statement (Quectel proprietary) */
+    lwgps_float_t pqtm_epe_n;     /*!< Estimated north position error in meters */
+    lwgps_float_t pqtm_epe_e;     /*!< Estimated east position error in meters */
+    lwgps_float_t pqtm_epe_d;     /*!< Estimated down (vertical) error in meters */
+    lwgps_float_t pqtm_epe_2d;    /*!< Estimated 2D horizontal error in meters */
+    lwgps_float_t pqtm_epe_3d;    /*!< Estimated 3D position error in meters */
+#endif                            /* LWGPS_CFG_STATEMENT_PQTMEPE || __DOXYGEN__ */
 
 #if !__DOXYGEN__
     struct {
@@ -228,6 +264,40 @@ typedef struct {
                 uint32_t tp_gran;        /*!< Time pulse granularity, eg 43 */
             } time;                      /*!< PUBX TIME message */
 #endif                                   /* LWGPS_CFG_STATEMENT_PUBX_TIME */
+#if LWGPS_CFG_STATEMENT_PQTMPVT
+            struct {
+                uint32_t tow;            /*!< GPS time of week in milliseconds */
+                uint32_t date;           /*!< UTC date YYYYMMDD */
+                uint8_t hours;           /*!< Current UTC hours */
+                uint8_t minutes;         /*!< Current UTC minutes */
+                uint8_t seconds;         /*!< Current UTC seconds */
+                uint16_t milliseconds;   /*!< Current UTC milliseconds */
+                uint8_t quality;         /*!< GPS quality indicator */
+                uint8_t fix_mode;        /*!< Fix mode (0=none, 2=2D, 3=3D) */
+                uint8_t sats_in_use;     /*!< Number of satellites in use */
+                int8_t leap_sec;         /*!< Leap seconds, -1 if invalid */
+                lwgps_float_t latitude;  /*!< Latitude in decimal degrees */
+                lwgps_float_t longitude; /*!< Longitude in decimal degrees */
+                lwgps_float_t altitude;  /*!< Altitude in meters */
+                lwgps_float_t geo_sep;   /*!< Geoid separation in meters */
+                lwgps_float_t vel_n;     /*!< North velocity in m/s */
+                lwgps_float_t vel_e;     /*!< East velocity in m/s */
+                lwgps_float_t vel_d;     /*!< Down velocity in m/s */
+                lwgps_float_t speed;     /*!< Ground speed in m/s */
+                lwgps_float_t heading;   /*!< Heading in degrees */
+                lwgps_float_t dop_h;     /*!< Horizontal DOP */
+                lwgps_float_t dop_p;     /*!< Position DOP */
+            } pvt;                       /*!< PQTMPVT message */
+#endif                                   /* LWGPS_CFG_STATEMENT_PQTMPVT */
+#if LWGPS_CFG_STATEMENT_PQTMEPE
+            struct {
+                lwgps_float_t epe_n;     /*!< Estimated north error in meters */
+                lwgps_float_t epe_e;     /*!< Estimated east error in meters */
+                lwgps_float_t epe_d;     /*!< Estimated down error in meters */
+                lwgps_float_t epe_2d;    /*!< Estimated 2D horizontal error */
+                lwgps_float_t epe_3d;    /*!< Estimated 3D error in meters */
+            } epe;                       /*!< PQTMEPE message */
+#endif                                   /* LWGPS_CFG_STATEMENT_PQTMEPE */
         } data;                          /*!< Union with data for each information */
     } p;                                 /*!< Structure with private data */
 #endif                                   /* !__DOXYGEN__ */

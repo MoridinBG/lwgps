@@ -192,6 +192,14 @@ prv_parse_term(lwgps_t* ghandle) {
         } else if (!strncmp(ghandle->p.term_str, "$PUBX", 5)) {
             ghandle->p.stat = STAT_UBX;
 #endif /* LWGPS_CFG_STATEMENT_PUBX */
+#if LWGPS_CFG_STATEMENT_PQTMPVT
+        } else if (!strncmp(ghandle->p.term_str, "$PQTMPVT", 8)) {
+            ghandle->p.stat = STAT_PQTM_PVT;
+#endif /* LWGPS_CFG_STATEMENT_PQTMPVT */
+#if LWGPS_CFG_STATEMENT_PQTMEPE
+        } else if (!strncmp(ghandle->p.term_str, "$PQTMEPE", 8)) {
+            ghandle->p.stat = STAT_PQTM_EPE;
+#endif /* LWGPS_CFG_STATEMENT_PQTMEPE */
         } else {
             ghandle->p.stat = STAT_UNKNOWN; /* Invalid statement for library */
         }
@@ -369,6 +377,54 @@ prv_parse_term(lwgps_t* ghandle) {
         }
 #endif /* LWGPS_CFG_STATEMENT_PUBX_TIME */
 #endif /* LWGPS_CFG_STATEMENT_PUBX */
+#if LWGPS_CFG_STATEMENT_PQTMPVT
+    } else if (ghandle->p.stat == STAT_PQTM_PVT) { /* Process PQTMPVT (Quectel) statement */
+        switch (ghandle->p.term_num) {
+            case 2: /* TOW */ ghandle->p.data.pvt.tow = (uint32_t)prv_parse_number(ghandle, NULL); break;
+            case 3: /* Date YYYYMMDD */ ghandle->p.data.pvt.date = (uint32_t)prv_parse_number(ghandle, NULL); break;
+            case 4: /* Time hhmmss.sss */
+                if (ghandle->p.term_pos >= 6) {
+                    ghandle->p.data.pvt.hours = 10U * CTN(ghandle->p.term_str[0]) + CTN(ghandle->p.term_str[1]);
+                    ghandle->p.data.pvt.minutes = 10U * CTN(ghandle->p.term_str[2]) + CTN(ghandle->p.term_str[3]);
+                    ghandle->p.data.pvt.seconds = 10U * CTN(ghandle->p.term_str[4]) + CTN(ghandle->p.term_str[5]);
+                    if (ghandle->p.term_pos >= 10 && ghandle->p.term_str[6] == '.') {
+                        ghandle->p.data.pvt.milliseconds = (uint16_t)(100U * CTN(ghandle->p.term_str[7])
+                                                                      + 10U * CTN(ghandle->p.term_str[8])
+                                                                      + CTN(ghandle->p.term_str[9]));
+                    }
+                }
+                break;
+            case 5: /* Quality */ ghandle->p.data.pvt.quality = (uint8_t)prv_parse_number(ghandle, NULL); break;
+            case 6: /* FixMode */ ghandle->p.data.pvt.fix_mode = (uint8_t)prv_parse_number(ghandle, NULL); break;
+            case 7: /* NumSatUsed */ ghandle->p.data.pvt.sats_in_use = (uint8_t)prv_parse_number(ghandle, NULL); break;
+            case 8: /* LeapS */
+                ghandle->p.data.pvt.leap_sec = ghandle->p.term_str[0] ? (int8_t)prv_parse_number(ghandle, NULL) : -1;
+                break;
+            case 9: /* Lat (decimal degrees) */ ghandle->p.data.pvt.latitude = prv_parse_float_number(ghandle, NULL); break;
+            case 10: /* Lon (decimal degrees) */ ghandle->p.data.pvt.longitude = prv_parse_float_number(ghandle, NULL); break;
+            case 11: /* Alt */ ghandle->p.data.pvt.altitude = prv_parse_float_number(ghandle, NULL); break;
+            case 12: /* Sep */ ghandle->p.data.pvt.geo_sep = prv_parse_float_number(ghandle, NULL); break;
+            case 13: /* VelN */ ghandle->p.data.pvt.vel_n = prv_parse_float_number(ghandle, NULL); break;
+            case 14: /* VelE */ ghandle->p.data.pvt.vel_e = prv_parse_float_number(ghandle, NULL); break;
+            case 15: /* VelD */ ghandle->p.data.pvt.vel_d = prv_parse_float_number(ghandle, NULL); break;
+            case 16: /* Spd */ ghandle->p.data.pvt.speed = prv_parse_float_number(ghandle, NULL); break;
+            case 17: /* Heading */ ghandle->p.data.pvt.heading = prv_parse_float_number(ghandle, NULL); break;
+            case 18: /* HDOP */ ghandle->p.data.pvt.dop_h = prv_parse_float_number(ghandle, NULL); break;
+            case 19: /* PDOP */ ghandle->p.data.pvt.dop_p = prv_parse_float_number(ghandle, NULL); break;
+            default: break;
+        }
+#endif /* LWGPS_CFG_STATEMENT_PQTMPVT */
+#if LWGPS_CFG_STATEMENT_PQTMEPE
+    } else if (ghandle->p.stat == STAT_PQTM_EPE) { /* Process PQTMEPE (Quectel) statement */
+        switch (ghandle->p.term_num) {
+            case 2: /* EPE_North */ ghandle->p.data.epe.epe_n = prv_parse_float_number(ghandle, NULL); break;
+            case 3: /* EPE_East */ ghandle->p.data.epe.epe_e = prv_parse_float_number(ghandle, NULL); break;
+            case 4: /* EPE_Down */ ghandle->p.data.epe.epe_d = prv_parse_float_number(ghandle, NULL); break;
+            case 5: /* EPE_2D */ ghandle->p.data.epe.epe_2d = prv_parse_float_number(ghandle, NULL); break;
+            case 6: /* EPE_3D */ ghandle->p.data.epe.epe_3d = prv_parse_float_number(ghandle, NULL); break;
+            default: break;
+        }
+#endif /* LWGPS_CFG_STATEMENT_PQTMEPE */
     }
     return 1;
 }
@@ -453,6 +509,38 @@ prv_copy_from_tmp_memory(lwgps_t* ghandle) {
         ghandle->clk_drift = ghandle->p.data.time.clk_drift;
         ghandle->tp_gran = ghandle->p.data.time.tp_gran;
 #endif /* LWGPS_CFG_STATEMENT_PUBX_TIME */
+#if LWGPS_CFG_STATEMENT_PQTMPVT
+    } else if (ghandle->p.stat == STAT_PQTM_PVT) {
+        ghandle->pqtm_lat = ghandle->p.data.pvt.latitude;
+        ghandle->pqtm_lon = ghandle->p.data.pvt.longitude;
+        ghandle->pqtm_alt = ghandle->p.data.pvt.altitude;
+        ghandle->pqtm_sep = ghandle->p.data.pvt.geo_sep;
+        ghandle->pqtm_dop_h = ghandle->p.data.pvt.dop_h;
+        ghandle->pqtm_dop_p = ghandle->p.data.pvt.dop_p;
+        ghandle->pqtm_vel_n = ghandle->p.data.pvt.vel_n;
+        ghandle->pqtm_vel_e = ghandle->p.data.pvt.vel_e;
+        ghandle->pqtm_vel_d = ghandle->p.data.pvt.vel_d;
+        ghandle->pqtm_speed = ghandle->p.data.pvt.speed;
+        ghandle->pqtm_heading = ghandle->p.data.pvt.heading;
+        ghandle->pqtm_tow = ghandle->p.data.pvt.tow;
+        ghandle->pqtm_date = ghandle->p.data.pvt.date;
+        ghandle->pqtm_hours = ghandle->p.data.pvt.hours;
+        ghandle->pqtm_minutes = ghandle->p.data.pvt.minutes;
+        ghandle->pqtm_seconds = ghandle->p.data.pvt.seconds;
+        ghandle->pqtm_milliseconds = ghandle->p.data.pvt.milliseconds;
+        ghandle->pqtm_sats_in_use = ghandle->p.data.pvt.sats_in_use;
+        ghandle->pqtm_fix_mode = ghandle->p.data.pvt.fix_mode;
+        ghandle->pqtm_quality = ghandle->p.data.pvt.quality;
+        ghandle->pqtm_leap_sec = ghandle->p.data.pvt.leap_sec;
+#endif /* LWGPS_CFG_STATEMENT_PQTMPVT */
+#if LWGPS_CFG_STATEMENT_PQTMEPE
+    } else if (ghandle->p.stat == STAT_PQTM_EPE) {
+        ghandle->pqtm_epe_n = ghandle->p.data.epe.epe_n;
+        ghandle->pqtm_epe_e = ghandle->p.data.epe.epe_e;
+        ghandle->pqtm_epe_d = ghandle->p.data.epe.epe_d;
+        ghandle->pqtm_epe_2d = ghandle->p.data.epe.epe_2d;
+        ghandle->pqtm_epe_3d = ghandle->p.data.epe.epe_3d;
+#endif /* LWGPS_CFG_STATEMENT_PQTMEPE */
     }
     return 1;
 }

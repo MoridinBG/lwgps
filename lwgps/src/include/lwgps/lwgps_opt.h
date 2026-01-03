@@ -159,6 +159,39 @@ extern "C" {
 #endif
 
 /**
+ * \brief           Enables `1` or disables `0` parsing of
+ *                  PQTMPVT (Quectel) position/velocity/time messages.
+ *
+ * \note            PQTMPVT messages can be used to obtain:
+ *                      - Latitude, Longitude (decimal degrees)
+ *                      - Altitude, Ground speed (m/s), Heading
+ *                      - Velocity components (North/East/Down)
+ *                      - UTC date/time, satellites in use, HDOP/PDOP
+ *
+ *                  This is a nonstandard Quectel-specific extension,
+ *                  so disabled by default.
+ */
+#ifndef LWGPS_CFG_STATEMENT_PQTMPVT
+#define LWGPS_CFG_STATEMENT_PQTMPVT 0
+#endif
+
+/**
+ * \brief           Enables `1` or disables `0` parsing of
+ *                  PQTMEPE (Quectel) estimated position error messages.
+ *
+ * \note            PQTMEPE messages can be used to obtain:
+ *                      - Estimated 2D horizontal position error (meters)
+ *                      - Estimated 3D position error (meters)
+ *                      - Component errors (North/East/Down)
+ *
+ *                  This is a nonstandard Quectel-specific extension,
+ *                  so disabled by default.
+ */
+#ifndef LWGPS_CFG_STATEMENT_PQTMEPE
+#define LWGPS_CFG_STATEMENT_PQTMEPE 0
+#endif
+
+/**
  * \brief           Enables `1` or disables `0` CRC calculation and check
  *
  * \note            When not enabled, CRC check is ignored
