@@ -82,6 +82,9 @@ typedef enum {
     STAT_UBX_TIME = 6,             /*!< UBX TIME statement (uBlox specific) */
     STAT_PQTM_PVT = 7,             /*!< PQTMPVT statement (Quectel specific) */
     STAT_PQTM_EPE = 8,             /*!< PQTMEPE statement (Quectel specific) */
+    STAT_PAIR_ACK = 9,             /*!< PAIR001 ACK statement (Quectel specific) */
+    STAT_PQTM_CFGMSGRATE_ACK = 10, /*!< PQTMCFGMSGRATE response (Quectel specific) */
+    STAT_PQTM_SAVEPAR_ACK = 11,    /*!< PQTMSAVEPAR response (Quectel specific) */
     STAT_CHECKSUM_FAIL = UINT8_MAX /*!< Special case, used when checksum fails */
 } lwgps_statement_t;
 
@@ -188,6 +191,18 @@ typedef struct {
     lwgps_float_t pqtm_epe_2d;    /*!< Estimated 2D horizontal error in meters */
     lwgps_float_t pqtm_epe_3d;    /*!< Estimated 3D position error in meters */
 #endif                            /* LWGPS_CFG_STATEMENT_PQTMEPE || __DOXYGEN__ */
+
+#if LWGPS_CFG_STATEMENT_PAIR_ACK || __DOXYGEN__
+    /* Information related to PAIR001 ACK statement (Quectel proprietary) */
+    uint16_t pair_ack_cmd;        /*!< Command ID being acknowledged */
+    uint8_t pair_ack_result;      /*!< Result: 0=OK, 1=processing, 2=failed, 3=unsupported, 4=param error, 5=busy */
+#endif                            /* LWGPS_CFG_STATEMENT_PAIR_ACK || __DOXYGEN__ */
+
+#if LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK || LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK || __DOXYGEN__
+    /* Information related to PQTM ACK responses (Quectel proprietary) */
+    uint8_t pqtm_ack_ok;          /*!< 1 if response was OK, 0 if ERROR */
+    uint8_t pqtm_ack_error;       /*!< Error code if pqtm_ack_ok is 0 */
+#endif                            /* LWGPS_CFG_STATEMENT_PQTM_*_ACK || __DOXYGEN__ */
 
 #if !__DOXYGEN__
     struct {
@@ -298,6 +313,18 @@ typedef struct {
                 lwgps_float_t epe_3d;    /*!< Estimated 3D error in meters */
             } epe;                       /*!< PQTMEPE message */
 #endif                                   /* LWGPS_CFG_STATEMENT_PQTMEPE */
+#if LWGPS_CFG_STATEMENT_PAIR_ACK
+            struct {
+                uint16_t cmd;            /*!< Command ID being acknowledged */
+                uint8_t result;          /*!< Result code */
+            } pair_ack;                  /*!< PAIR001 ACK message */
+#endif                                   /* LWGPS_CFG_STATEMENT_PAIR_ACK */
+#if LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK || LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK
+            struct {
+                uint8_t ok;              /*!< 1 if OK, 0 if ERROR */
+                uint8_t error;           /*!< Error code if not OK */
+            } pqtm_ack;                  /*!< PQTM ACK response */
+#endif                                   /* LWGPS_CFG_STATEMENT_PQTM_*_ACK */
         } data;                          /*!< Union with data for each information */
     } p;                                 /*!< Structure with private data */
 #endif                                   /* !__DOXYGEN__ */

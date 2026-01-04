@@ -200,6 +200,18 @@ prv_parse_term(lwgps_t* ghandle) {
         } else if (!strncmp(ghandle->p.term_str, "$PQTMEPE", 8)) {
             ghandle->p.stat = STAT_PQTM_EPE;
 #endif /* LWGPS_CFG_STATEMENT_PQTMEPE */
+#if LWGPS_CFG_STATEMENT_PAIR_ACK
+        } else if (!strncmp(ghandle->p.term_str, "$PAIR001", 8)) {
+            ghandle->p.stat = STAT_PAIR_ACK;
+#endif /* LWGPS_CFG_STATEMENT_PAIR_ACK */
+#if LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK
+        } else if (!strncmp(ghandle->p.term_str, "$PQTMCFGMSGRATE", 15)) {
+            ghandle->p.stat = STAT_PQTM_CFGMSGRATE_ACK;
+#endif /* LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK */
+#if LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK
+        } else if (!strncmp(ghandle->p.term_str, "$PQTMSAVEPAR", 12)) {
+            ghandle->p.stat = STAT_PQTM_SAVEPAR_ACK;
+#endif /* LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK */
         } else {
             ghandle->p.stat = STAT_UNKNOWN; /* Invalid statement for library */
         }
@@ -425,6 +437,29 @@ prv_parse_term(lwgps_t* ghandle) {
             default: break;
         }
 #endif /* LWGPS_CFG_STATEMENT_PQTMEPE */
+#if LWGPS_CFG_STATEMENT_PAIR_ACK
+    } else if (ghandle->p.stat == STAT_PAIR_ACK) { /* Process PAIR001 ACK (Quectel) statement */
+        switch (ghandle->p.term_num) {
+            case 1: /* CommandID */ ghandle->p.data.pair_ack.cmd = (uint16_t)prv_parse_number(ghandle, NULL); break;
+            case 2: /* Result */ ghandle->p.data.pair_ack.result = (uint8_t)prv_parse_number(ghandle, NULL); break;
+            default: break;
+        }
+#endif /* LWGPS_CFG_STATEMENT_PAIR_ACK */
+#if LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK || LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK
+    } else if (ghandle->p.stat == STAT_PQTM_CFGMSGRATE_ACK || ghandle->p.stat == STAT_PQTM_SAVEPAR_ACK) {
+        switch (ghandle->p.term_num) {
+            case 1: /* OK or ERROR */
+                ghandle->p.data.pqtm_ack.ok = (ghandle->p.term_str[0] == 'O' && ghandle->p.term_str[1] == 'K');
+                ghandle->p.data.pqtm_ack.error = 0;
+                break;
+            case 2: /* Error code (only if ERROR) */
+                if (!ghandle->p.data.pqtm_ack.ok) {
+                    ghandle->p.data.pqtm_ack.error = (uint8_t)prv_parse_number(ghandle, NULL);
+                }
+                break;
+            default: break;
+        }
+#endif /* LWGPS_CFG_STATEMENT_PQTM_*_ACK */
     }
     return 1;
 }
@@ -541,6 +576,16 @@ prv_copy_from_tmp_memory(lwgps_t* ghandle) {
         ghandle->pqtm_epe_2d = ghandle->p.data.epe.epe_2d;
         ghandle->pqtm_epe_3d = ghandle->p.data.epe.epe_3d;
 #endif /* LWGPS_CFG_STATEMENT_PQTMEPE */
+#if LWGPS_CFG_STATEMENT_PAIR_ACK
+    } else if (ghandle->p.stat == STAT_PAIR_ACK) {
+        ghandle->pair_ack_cmd = ghandle->p.data.pair_ack.cmd;
+        ghandle->pair_ack_result = ghandle->p.data.pair_ack.result;
+#endif /* LWGPS_CFG_STATEMENT_PAIR_ACK */
+#if LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK || LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK
+    } else if (ghandle->p.stat == STAT_PQTM_CFGMSGRATE_ACK || ghandle->p.stat == STAT_PQTM_SAVEPAR_ACK) {
+        ghandle->pqtm_ack_ok = ghandle->p.data.pqtm_ack.ok;
+        ghandle->pqtm_ack_error = ghandle->p.data.pqtm_ack.error;
+#endif /* LWGPS_CFG_STATEMENT_PQTM_*_ACK */
     }
     return 1;
 }
