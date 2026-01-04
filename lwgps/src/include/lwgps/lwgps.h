@@ -207,7 +207,7 @@ typedef struct {
 #if !__DOXYGEN__
     struct {
         lwgps_statement_t stat; /*!< Statement index */
-        char term_str[13];      /*!< Current term in string format */
+        char term_str[16];      /*!< Current term in string format */
         uint8_t term_pos;       /*!< Current index position in term */
         uint8_t term_num;       /*!< Current term number */
 
