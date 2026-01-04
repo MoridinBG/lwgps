@@ -192,6 +192,30 @@ extern "C" {
 #endif
 
 /**
+ * \brief           Enables `1` or disables `0` parsing of
+ *                  PAIR001 ACK (Quectel) command acknowledgment.
+ */
+#ifndef LWGPS_CFG_STATEMENT_PAIR_ACK
+#define LWGPS_CFG_STATEMENT_PAIR_ACK 0
+#endif
+
+/**
+ * \brief           Enables `1` or disables `0` parsing of
+ *                  PQTMCFGMSGRATE ACK response.
+ */
+#ifndef LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK
+#define LWGPS_CFG_STATEMENT_PQTM_CFGMSGRATE_ACK 0
+#endif
+
+/**
+ * \brief           Enables `1` or disables `0` parsing of
+ *                  PQTMSAVEPAR ACK response.
+ */
+#ifndef LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK
+#define LWGPS_CFG_STATEMENT_PQTM_SAVEPAR_ACK 0
+#endif
+
+/**
  * \brief           Enables `1` or disables `0` CRC calculation and check
  *
  * \note            When not enabled, CRC check is ignored
